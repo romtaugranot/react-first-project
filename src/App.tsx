@@ -1,35 +1,55 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react"
+import "./styles.css"
+import { NewTodoForm } from "./components/NewTodoForm"
+import { v4 as uuidv4 } from "uuid";
+import { TodoList } from "./components/TodoList";
+import { Todo } from "./interfaces/Todo";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App: React.FC = () => {
+  const [todos, setTodos] = useState<Todo[]>(() => {
+    const localValue = localStorage.getItem("ITEMS")
+    if (localValue == null) return []
+    return JSON.parse(localValue)
+  });
+
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos))
+  }, [todos])
+
+  function addTodo(title: string){
+    const newTodo: Todo = {
+      id: uuidv4(),
+      title: title,
+      completed: false,
+    };
+
+    setTodos([...todos, newTodo]);
+  }
+
+  function toggleTodo(id: string, completed: boolean){
+    setTodos(currentTodos => {
+      return currentTodos.map(todo => {
+        if (todo.id == id) {
+          return {...todo, completed}
+        }
+        return todo 
+      })
+    })
+  }
+
+  function deleteTodo(id: string){
+    setTodos(currentTodos => {
+      return currentTodos.filter(todo => todo.id != id)
+    })
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <NewTodoForm onSubmit={addTodo}/>
+      <h1 className="header">Todo List</h1>
+      <TodoList todos={todos} toggleTodo={toggleTodo} deleteTodo={deleteTodo}/>
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;
